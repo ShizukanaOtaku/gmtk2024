@@ -29,7 +29,7 @@ impl Player {
     }
 
     pub fn render(&mut self, display: &mut RaylibDrawHandle, game_state: &mut GameState) {
-        self.velocity.y += 2.2 * ((self.scale + 1.0) / 2.0); // Gravity
+        self.velocity.y += 3.0 * ((self.scale + 1.0) / 2.0); // Gravity
 
         if self.position.y
             >= display.get_screen_height() as f32 - TILE_SIZE_PIXELS as f32 * self.scale
@@ -43,7 +43,7 @@ impl Player {
         self.move_horizontal(game_state);
         self.handle_scaling(game_state, display);
 
-        self.velocity *= 0.8; // apply drag
+        self.velocity *= 0.75; // apply drag
 
         self.tick_since_last_ground += 1;
 
@@ -111,16 +111,16 @@ impl Player {
             self.velocity.x -= speed;
         }
         if self.on_ground && display.is_key_down(raylib::ffi::KeyboardKey::KEY_SPACE) {
-            self.velocity.y = -90.0 * (self.scale / 2.0); // jump
+            self.velocity.y = -90.0 * (self.scale / 1.5); // jump
             self.tick_since_last_ground = 100;
         }
     }
 
     pub fn hitbox(&self) -> Rectangle {
         Rectangle {
-            x: self.position.x,
+            x: self.position.x + TILE_SIZE_PIXELS as f32 * 0.125,
             y: self.position.y,
-            width: TILE_SIZE_PIXELS as f32 * self.scale,
+            width: (TILE_SIZE_PIXELS as f32 - 0.25) * self.scale,
             height: TILE_SIZE_PIXELS as f32 * self.scale,
         }
     }
@@ -138,7 +138,7 @@ impl Player {
 
     fn handle_scaling(&mut self, game_state: &mut GameState, display: &mut RaylibDrawHandle) {
         let size_change = 0.05;
-        if self.scale < 3.0 && display.is_key_down(raylib::ffi::KeyboardKey::KEY_UP) {
+        if self.scale < 2.0 && display.is_key_down(raylib::ffi::KeyboardKey::KEY_UP) {
             self.scale += size_change * 2.0;
             self.position.y -= size_change * 2.0 * TILE_SIZE_PIXELS as f32;
             if game_state.current_level.tilemap.collides(&self.hitbox()) {

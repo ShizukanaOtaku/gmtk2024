@@ -7,6 +7,7 @@ use crate::{tile::Tile, tilemap::Tilemap, Vector2i};
 
 pub struct Level {
     pub tilemap: Tilemap,
+    lever_hook: Option<Box<dyn FnMut(&mut Self)>>,
 }
 
 impl Level {
@@ -15,9 +16,18 @@ impl Level {
         thread: &RaylibThread,
         path: &str,
         tileset: HashMap<u32, (&str, bool, usize)>,
+        lever_trigger: Option<Box<dyn FnMut(&mut Self)>>,
     ) -> Self {
         Self {
             tilemap: load_tilemap(rl, thread, path, tileset),
+            lever_hook: lever_trigger,
+        }
+    }
+
+    pub fn on_lever_flip(&mut self) {
+        if let Some(mut hook) = self.lever_hook.take() {
+            hook(self);
+            self.lever_hook = Some(hook);
         }
     }
 }

@@ -34,8 +34,8 @@ impl Vector2i {
     }
 }
 
-struct GameState<'a> {
-    current_level: &'a Level,
+struct GameState {
+    current_level: Level,
     won: bool,
 }
 
@@ -63,8 +63,9 @@ fn main() {
         (0xff0000, ("assets/exit.png", false, 4)),
         (0x5a5a5a, ("assets/weak_wall.png", true, 5)),
         (0xff00f0, ("assets/lever_off.png", false, 6)),
-        (0x00ff00, ("assets/bomb.png", false, 7)),
-        (0x146464, ("assets/background.png", false, 8)), // player spawn
+        (0xff00ff, ("assets/lever_on.png", false, 7)),
+        (0x00ff00, ("assets/bomb.png", false, 8)),
+        (0x146464, ("assets/background.png", false, 9)), // player spawn
     ]);
 
     levels.push(Level::load_from_file(
@@ -72,6 +73,7 @@ fn main() {
         &thread,
         "assets/level1.png",
         tileset.clone(),
+        Some(Box::new(|&mut _| println!("Level 1 lever flipped"))),
     ));
 
     levels.push(Level::load_from_file(
@@ -79,6 +81,7 @@ fn main() {
         &thread,
         "assets/level2.png",
         tileset.clone(),
+        None,
     ));
 
     levels.push(Level::load_from_file(
@@ -86,11 +89,14 @@ fn main() {
         &thread,
         "assets/level3.png",
         tileset.clone(),
+        Some(Box::new(|level: &mut Level| {
+            level.tilemap.set_tile(Vector2i::new(6, 1), 0);
+            level.tilemap.set_tile(Vector2i::new(6, 2), 0);
+        })),
     ));
 
-    let mut level_index = 0;
     let mut game_state = GameState {
-        current_level: levels.get(level_index).unwrap(),
+        current_level: levels.remove(0),
         won: false,
     };
 
@@ -124,6 +130,22 @@ fn main() {
         game_state.current_level.tilemap.render(&mut d);
         player.render(&mut d, &mut game_state);
 
+        if d.is_key_pressed(KeyboardKey::KEY_F)
+            && game_state
+                .current_level
+                .tilemap
+                .get_tile(&player.tile_pos_center())
+                .unwrap()
+                .id()
+                == 6
+        {
+            game_state
+                .current_level
+                .tilemap
+                .set_tile(player.tile_pos_center(), 7);
+            game_state.current_level.on_lever_flip();
+        }
+
         if game_state
             .current_level
             .tilemap
@@ -132,13 +154,12 @@ fn main() {
             .id()
             == 4
         {
-            level_index += 1;
-            if level_index >= levels.len() {
+            if levels.len() == 0 {
                 println!("W!");
                 game_state.won = true;
                 continue;
             }
-            game_state.current_level = levels.get(level_index).unwrap();
+            game_state.current_level = levels.remove(0);
             set_player_pos(&game_state, &mut player);
         }
     }
@@ -146,7 +167,7 @@ fn main() {
 
 fn set_player_pos(game_state: &GameState, player: &mut Player) {
     for (pos, tile) in game_state.current_level.tilemap.iter() {
-        if tile.id() == 8 {
+        if tile.id() == 9 {
             player.position = Vector2::new(
                 (pos.x * TILE_SIZE_PIXELS) as f32,
                 (pos.y * TILE_SIZE_PIXELS) as f32,
