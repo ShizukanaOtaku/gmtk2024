@@ -43,7 +43,7 @@ fn load_tilemap(
         let b = pixel.2 .0[2] as u32;
         let a = pixel.2 .0[3];
 
-        let code = r << 8 | g << 4 | b;
+        let code = r << 16 | g << 8 | b;
 
         let tile_id = tileset.get(&code);
         if tile_id.is_some() && a == 255 {
@@ -53,6 +53,7 @@ fn load_tilemap(
                 tile_data.2, // the id
             );
         } else {
+            println!("Unknown color code: {code}");
             tilemap.set_tile(Vector2i::new(pixel.0 as i32, pixel.1 as i32), 0);
         }
     }

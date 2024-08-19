@@ -51,7 +51,7 @@ fn main() {
 
     let player_texture = rl.load_texture(&thread, "assets/player.png").unwrap();
     let mut player = Player::new(
-        Vector2::new((TILE_SIZE_PIXELS * 3) as f32, (TILE_SIZE_PIXELS * 3) as f32),
+        Vector2::new((TILE_SIZE_PIXELS * 1) as f32, (TILE_SIZE_PIXELS * 1) as f32),
         player_texture,
     );
 
@@ -64,7 +64,10 @@ fn main() {
             (0x0, ("assets/wall.png", true, 1)),
             (0x143c96, ("assets/vent.png", false, 2)),
             (0x14a064, ("assets/dead_robot.png", false, 3)),
-            (0xff0000, ("assets/vent.png", false, 4)),
+            (0xff0000, ("assets/exit.png", false, 4)),
+            (0x5a5a5a, ("assets/weak_wall.png", true, 5)),
+            (0xff00f0, ("assets/lever_off.png", false, 6)),
+            (0x00ff00, ("assets/bomb.png", false, 7)),
         ]),
     );
     let bg_color = Color::from_hex("323232").unwrap();

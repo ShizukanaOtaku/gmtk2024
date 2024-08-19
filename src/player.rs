@@ -5,7 +5,7 @@ use raylib::{
     texture::Texture2D,
 };
 
-use crate::{GameState, Tilemap, SCALE, TILE_SIZE_PIXELS};
+use crate::{GameState, SCALE, TILE_SIZE_PIXELS};
 
 pub struct Player {
     position: Vector2, // position in pixels on the screen
@@ -35,9 +35,11 @@ impl Player {
             self.on_ground = true;
         }
 
-        self.handle_input(display, &game_state.tilemap);
+        self.handle_input(display);
+
         self.move_vertical(game_state);
         self.move_horizontal(game_state);
+        self.handle_scaling(game_state, display);
 
         self.velocity *= 0.8; // apply drag
 
@@ -53,32 +55,46 @@ impl Player {
 
     fn move_horizontal(&mut self, game_state: &mut GameState) {
         self.position.x += self.velocity.x;
-        let mut i = 0;
-        while game_state.tilemap.collides(&self.hitbox()) {
+        if game_state.tilemap.collides(&self.hitbox()) {
             self.position.x -= self.velocity.x;
-            if i >= 10 {
-                break;
+            let mut i = 0;
+            while !game_state.tilemap.collides(&self.hitbox()) {
+                self.velocity.x /= 1.5;
+                self.position.x += self.velocity.x;
+                self.on_ground = self.velocity.x >= 0.0;
+                if i >= 10 {
+                    break;
+                }
+                i += 1;
             }
-            i += 1;
+            self.position.x -= self.velocity.x;
         }
     }
 
     fn move_vertical(&mut self, game_state: &mut GameState) {
-        self.position.y += self.velocity.y;
         self.on_ground = false;
-        let mut i = 0;
-        while game_state.tilemap.collides(&self.hitbox()) {
+        self.position.y += self.velocity.y;
+        if game_state.tilemap.collides(&self.hitbox()) {
             self.position.y -= self.velocity.y;
             self.on_ground = self.velocity.y >= 0.0;
-            self.velocity.y = 0.0;
-            if i >= 10 {
-                break;
+            let mut i = 0;
+
+            while !game_state.tilemap.collides(&self.hitbox()) {
+                self.velocity.y /= 1.5;
+                self.position.y += self.velocity.y;
+                if i >= 10 {
+                    break;
+                }
+                i += 1;
             }
-            i += 1;
+            self.position.y -= self.velocity.y;
+            if self.on_ground {
+                self.velocity.y = 0.0;
+            }
         }
     }
 
-    fn handle_input(&mut self, display: &mut RaylibDrawHandle, tilemap: &Tilemap) {
+    fn handle_input(&mut self, display: &mut RaylibDrawHandle) {
         let speed = 1.5;
         if display.is_key_down(raylib::ffi::KeyboardKey::KEY_D) {
             self.velocity.x += speed;
@@ -88,20 +104,6 @@ impl Player {
         }
         if self.on_ground && display.is_key_down(raylib::ffi::KeyboardKey::KEY_SPACE) {
             self.velocity.y = -60.0 * (self.scale / 2.0); // jump
-        }
-
-        let size_change = 0.05;
-        if self.scale < 3.0 && display.is_key_down(raylib::ffi::KeyboardKey::KEY_UP) {
-            self.scale += size_change * 2.0;
-            self.position.y -= size_change * 2.0 * TILE_SIZE_PIXELS as f32;
-            if tilemap.collides(&self.hitbox()) {
-                self.scale -= size_change;
-                self.position.y += size_change * TILE_SIZE_PIXELS as f32;
-            }
-            self.scale -= size_change;
-        }
-        if self.scale > 1.0 && display.is_key_down(raylib::ffi::KeyboardKey::KEY_DOWN) {
-            self.scale -= size_change;
         }
     }
 
@@ -123,5 +125,22 @@ impl Player {
             0.0,
             display.get_screen_height() as f32 - TILE_SIZE_PIXELS as f32 * self.scale,
         );
+    }
+
+    fn handle_scaling(&mut self, game_state: &mut GameState, display: &mut RaylibDrawHandle) {
+        let size_change = 0.05;
+        if self.scale < 3.0 && display.is_key_down(raylib::ffi::KeyboardKey::KEY_UP) {
+            self.scale += size_change * 2.0;
+            self.position.y -= size_change * 2.0 * TILE_SIZE_PIXELS as f32;
+            if game_state.tilemap.collides(&self.hitbox()) {
+                self.scale -= size_change;
+                self.position.y += size_change * TILE_SIZE_PIXELS as f32;
+            }
+            self.scale -= size_change;
+            self.position.y += size_change * TILE_SIZE_PIXELS as f32;
+        }
+        if self.scale > 1.0 && display.is_key_down(raylib::ffi::KeyboardKey::KEY_DOWN) {
+            self.scale -= size_change;
+        }
     }
 }
