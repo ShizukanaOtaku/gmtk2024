@@ -29,7 +29,7 @@ impl Player {
     }
 
     pub fn render(&mut self, display: &mut RaylibDrawHandle, game_state: &mut GameState) {
-        self.velocity.y += 3.0 * ((self.scale + 1.0) / 2.0); // Gravity
+        self.velocity.y += 2.8 * ((self.scale + 1.0) / 2.0); // Gravity
 
         if self.position.y
             >= display.get_screen_height() as f32 - TILE_SIZE_PIXELS as f32 * self.scale

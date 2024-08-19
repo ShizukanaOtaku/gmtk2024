@@ -155,7 +155,6 @@ fn main() {
             == 4
         {
             if levels.len() == 0 {
-                println!("W!");
                 game_state.won = true;
                 continue;
             }
