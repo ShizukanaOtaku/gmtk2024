@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::Display, process::exit};
+use std::{collections::HashMap, fmt::Display};
 
 use level::Level;
 use math::Vector2;
@@ -36,6 +36,7 @@ impl Vector2i {
 
 struct GameState<'a> {
     current_level: &'a Level,
+    won: bool,
 }
 
 fn main() {
@@ -49,7 +50,6 @@ fn main() {
 
     rl.set_exit_key(None);
     rl.set_target_fps(60);
-    let bg_color = Color::from_hex("323232").unwrap();
 
     let player_texture = rl.load_texture(&thread, "assets/player.png").unwrap();
     let mut player = Player::new(Vector2::zero(), player_texture);
@@ -84,12 +84,35 @@ fn main() {
     let mut level_index = 0;
     let mut game_state = GameState {
         current_level: levels.get(level_index).unwrap(),
+        won: false,
     };
 
     set_player_pos(&game_state, &mut player);
     while !rl.window_should_close() {
         let mut d = rl.begin_drawing(&thread);
-        d.clear_background(bg_color);
+        d.clear_background(Color::BLACK);
+
+        if game_state.won {
+            let text = "YOU ESCAPED!";
+            let width = d.measure_text(&text, 80);
+            d.draw_text(
+                text,
+                d.get_screen_width() / 2 - width / 2,
+                d.get_screen_height() / 2 - 50,
+                80,
+                Color::WHITE,
+            );
+            let text = "THANKS FOR PLAYING <3";
+            let width = d.measure_text(text, 32);
+            d.draw_text(
+                text,
+                d.get_screen_width() / 2 - width / 2,
+                d.get_screen_height() / 2 + 50,
+                32,
+                Color::WHITE,
+            );
+            continue;
+        }
 
         game_state.current_level.tilemap.render(&mut d);
         player.render(&mut d, &mut game_state);
@@ -105,7 +128,8 @@ fn main() {
             level_index += 1;
             if level_index >= levels.len() {
                 println!("W!");
-                exit(0);
+                game_state.won = true;
+                continue;
             }
             game_state.current_level = levels.get(level_index).unwrap();
             set_player_pos(&game_state, &mut player);
