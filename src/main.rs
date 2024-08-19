@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{collections::HashMap, fmt::Display};
 
 use level::Level;
 use player::Player;
@@ -7,9 +7,8 @@ use tilemap::Tilemap;
 
 mod level;
 mod player;
-mod tilemap;
-mod utils;
 mod tile;
+mod tilemap;
 
 static SCALE: i32 = 4;
 static TILEMAP_WIDTH: i32 = 16;
@@ -60,14 +59,27 @@ fn main() {
         &mut rl,
         &thread,
         "assets/level1.png",
-        vec!["assets/background.png"],
+        HashMap::from([
+            (0xFFFFFF, ("assets/background.png", false, 0)),
+            (0x0, ("assets/wall.png", true, 1)),
+            (0x143c96, ("assets/vent.png", false, 2)),
+            (0x14a064, ("assets/dead_robot.png", false, 3)),
+            (0xff0000, ("assets/vent.png", false, 4)),
+        ]),
     );
     let bg_color = Color::from_hex("323232").unwrap();
     let mut gamestate = GameState {
         tilemap: level.tilemap,
     };
 
-    gamestate.tilemap.set_tile(Vector2i::new(3, 4), 0);
+    println!(
+        "{}",
+        gamestate
+            .tilemap
+            .get_tile(&Vector2i::new(0, 0))
+            .unwrap()
+            .solid()
+    );
 
     while !rl.window_should_close() {
         let mut d = rl.begin_drawing(&thread);
