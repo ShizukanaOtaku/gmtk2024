@@ -13,6 +13,7 @@ pub struct Player {
     scale: f32,
     pub velocity: Vector2,
     pub on_ground: bool,
+    tick_since_last_ground: i32,
 }
 
 impl Player {
@@ -23,6 +24,7 @@ impl Player {
             texture,
             on_ground: false,
             velocity: Vector2::zero(),
+            tick_since_last_ground: 0,
         }
     }
 
@@ -42,6 +44,8 @@ impl Player {
         self.handle_scaling(game_state, display);
 
         self.velocity *= 0.8; // apply drag
+
+        self.tick_since_last_ground += 1;
 
         self.clamp_position(display); // don't fall out of the screen
         display.draw_texture_ex(
@@ -76,6 +80,9 @@ impl Player {
         if game_state.current_level.tilemap.collides(&self.hitbox()) {
             self.position.y -= self.velocity.y;
             self.on_ground = self.velocity.y >= 0.0;
+            if self.on_ground {
+                self.tick_since_last_ground = 0;
+            }
             let mut i = 0;
 
             while !game_state.current_level.tilemap.collides(&self.hitbox()) {
@@ -90,6 +97,8 @@ impl Player {
             if self.on_ground {
                 self.velocity.y = 0.0;
             }
+        } else {
+            self.on_ground = self.tick_since_last_ground <= 10;
         }
     }
 
@@ -103,6 +112,7 @@ impl Player {
         }
         if self.on_ground && display.is_key_down(raylib::ffi::KeyboardKey::KEY_SPACE) {
             self.velocity.y = -90.0 * (self.scale / 2.0); // jump
+            self.tick_since_last_ground = 100;
         }
     }
 
