@@ -69,3 +69,32 @@ impl Tilemap {
         return false;
     }
 }
+
+use std::collections::hash_map::Iter;
+
+pub struct TilemapIterator<'a> {
+    map_iter: Iter<'a, Vector2i, usize>,
+    tileset: &'a Vec<Tile>,
+}
+
+impl<'a> Iterator for TilemapIterator<'a> {
+    type Item = (&'a Vector2i, &'a Tile);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some((pos, &tile_id)) = self.map_iter.next() {
+            if let Some(tile) = self.tileset.get(tile_id) {
+                return Some((pos, tile));
+            }
+        }
+        None
+    }
+}
+
+impl Tilemap {
+    pub fn iter(&self) -> TilemapIterator {
+        TilemapIterator {
+            map_iter: self.tiles.iter(),
+            tileset: &self.tileset,
+        }
+    }
+}

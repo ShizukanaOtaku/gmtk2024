@@ -8,7 +8,7 @@ use raylib::{
 use crate::{GameState, SCALE, TILE_SIZE_PIXELS};
 
 pub struct Player {
-    position: Vector2, // position in pixels on the screen
+    pub position: Vector2, // position in pixels on the screen
     texture: Texture2D,
     scale: f32,
     pub velocity: Vector2,
@@ -61,7 +61,6 @@ impl Player {
             while !game_state.tilemap.collides(&self.hitbox()) {
                 self.velocity.x /= 1.5;
                 self.position.x += self.velocity.x;
-                self.on_ground = self.velocity.x >= 0.0;
                 if i >= 10 {
                     break;
                 }

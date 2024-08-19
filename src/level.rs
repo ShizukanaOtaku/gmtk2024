@@ -31,8 +31,8 @@ fn load_tilemap(
     let mut tiles = Vec::new();
     let mut sorted: Vec<_> = tileset.values().clone().collect();
     sorted.sort_by_key(|k| k.2);
-    for (tile_path, solid, _id) in sorted.iter() {
-        tiles.push(Tile::new(rl, thread, tile_path, *solid));
+    for (tile_path, solid, id) in sorted.iter() {
+        tiles.push(Tile::new(rl, thread, tile_path, *solid, *id));
     }
 
     let mut tilemap = Tilemap::new(tiles);
