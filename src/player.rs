@@ -5,7 +5,7 @@ use raylib::{
     texture::Texture2D,
 };
 
-use crate::{GameState, SCALE, TILE_SIZE_PIXELS};
+use crate::{utils::nearest_lower_multiple, GameState, Vector2i, SCALE, TILE_SIZE_PIXELS};
 
 pub struct Player {
     pub position: Vector2, // position in pixels on the screen
@@ -55,10 +55,10 @@ impl Player {
 
     fn move_horizontal(&mut self, game_state: &mut GameState) {
         self.position.x += self.velocity.x;
-        if game_state.tilemap.collides(&self.hitbox()) {
+        if game_state.current_level.tilemap.collides(&self.hitbox()) {
             self.position.x -= self.velocity.x;
             let mut i = 0;
-            while !game_state.tilemap.collides(&self.hitbox()) {
+            while !game_state.current_level.tilemap.collides(&self.hitbox()) {
                 self.velocity.x /= 1.5;
                 self.position.x += self.velocity.x;
                 if i >= 10 {
@@ -73,12 +73,12 @@ impl Player {
     fn move_vertical(&mut self, game_state: &mut GameState) {
         self.on_ground = false;
         self.position.y += self.velocity.y;
-        if game_state.tilemap.collides(&self.hitbox()) {
+        if game_state.current_level.tilemap.collides(&self.hitbox()) {
             self.position.y -= self.velocity.y;
             self.on_ground = self.velocity.y >= 0.0;
             let mut i = 0;
 
-            while !game_state.tilemap.collides(&self.hitbox()) {
+            while !game_state.current_level.tilemap.collides(&self.hitbox()) {
                 self.velocity.y /= 1.5;
                 self.position.y += self.velocity.y;
                 if i >= 10 {
@@ -131,7 +131,7 @@ impl Player {
         if self.scale < 3.0 && display.is_key_down(raylib::ffi::KeyboardKey::KEY_UP) {
             self.scale += size_change * 2.0;
             self.position.y -= size_change * 2.0 * TILE_SIZE_PIXELS as f32;
-            if game_state.tilemap.collides(&self.hitbox()) {
+            if game_state.current_level.tilemap.collides(&self.hitbox()) {
                 self.scale -= size_change;
                 self.position.y += size_change * TILE_SIZE_PIXELS as f32;
             }
@@ -140,6 +140,19 @@ impl Player {
         }
         if self.scale > 1.0 && display.is_key_down(raylib::ffi::KeyboardKey::KEY_DOWN) {
             self.scale -= size_change;
+        }
+    }
+
+    pub fn tile_pos_center(&self) -> Vector2i {
+        Vector2i {
+            x: nearest_lower_multiple(
+                (self.position.x + TILE_SIZE_PIXELS as f32 * self.scale / 2.0) as i32,
+                TILE_SIZE_PIXELS,
+            ) / TILE_SIZE_PIXELS,
+            y: nearest_lower_multiple(
+                (self.position.y + TILE_SIZE_PIXELS as f32 * self.scale / 2.0) as i32,
+                TILE_SIZE_PIXELS,
+            ) / TILE_SIZE_PIXELS,
         }
     }
 }
