@@ -81,6 +81,13 @@ fn main() {
         tileset.clone(),
     ));
 
+    levels.push(Level::load_from_file(
+        &mut rl,
+        &thread,
+        "assets/level3.png",
+        tileset.clone(),
+    ));
+
     let mut level_index = 0;
     let mut game_state = GameState {
         current_level: levels.get(level_index).unwrap(),

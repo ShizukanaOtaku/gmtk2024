@@ -102,7 +102,7 @@ impl Player {
             self.velocity.x -= speed;
         }
         if self.on_ground && display.is_key_down(raylib::ffi::KeyboardKey::KEY_SPACE) {
-            self.velocity.y = -60.0 * (self.scale / 2.0); // jump
+            self.velocity.y = -90.0 * (self.scale / 2.0); // jump
         }
     }
 
