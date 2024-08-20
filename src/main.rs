@@ -165,6 +165,7 @@ fn main() {
     ];
     let audio = RaylibAudio::init_audio_device().unwrap();
     let music = audio.new_sound("assets/music.wav").unwrap();
+    let bomb_sfx = audio.new_sound("assets/explosion.wav").unwrap();
     while !rl.window_should_close() {
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(Color::BLACK);
@@ -271,6 +272,9 @@ fn main() {
                 }
             }
         } else if d.is_key_pressed(KeyboardKey::KEY_ENTER) {
+            if !game_state.placed_bombs.is_empty() {
+                bomb_sfx.play();
+            }
             detonate_all_bombs(&mut game_state, &mut explosions);
         }
 
