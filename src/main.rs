@@ -36,6 +36,7 @@ impl Vector2i {
 
 struct GameState {
     current_level: Level,
+    bombs: i32,
     won: bool,
 }
 
@@ -97,6 +98,7 @@ fn main() {
 
     let mut game_state = GameState {
         current_level: levels.remove(0),
+        bombs: 0,
         won: false,
     };
 
@@ -130,20 +132,49 @@ fn main() {
         game_state.current_level.tilemap.render(&mut d);
         player.render(&mut d, &mut game_state);
 
-        if d.is_key_pressed(KeyboardKey::KEY_F)
-            && game_state
+        if d.is_key_pressed(KeyboardKey::KEY_F) {
+            if game_state
                 .current_level
                 .tilemap
                 .get_tile(&player.tile_pos_center())
                 .unwrap()
                 .id()
                 == 6
-        {
-            game_state
+            {
+                game_state
+                    .current_level
+                    .tilemap
+                    .set_tile(player.tile_pos_center(), 7);
+                game_state.current_level.on_lever_flip();
+            } else if game_state
                 .current_level
                 .tilemap
-                .set_tile(player.tile_pos_center(), 7);
-            game_state.current_level.on_lever_flip();
+                .get_tile(&player.tile_pos_center())
+                .unwrap()
+                .id()
+                == 8
+            {
+                game_state
+                    .current_level
+                    .tilemap
+                    .set_tile(player.tile_pos_center(), 0);
+                game_state.bombs += 1;
+            } else if game_state
+                .current_level
+                .tilemap
+                .get_tile(&player.tile_pos_center())
+                .unwrap()
+                .id()
+                == 0
+            {
+                if game_state.bombs >= 1 {
+                    game_state
+                        .current_level
+                        .tilemap
+                        .set_tile(player.tile_pos_center(), 8);
+                    game_state.bombs -= 1;
+                }
+            }
         }
 
         if game_state
