@@ -105,9 +105,18 @@ fn main() {
     };
 
     set_player_pos(&game_state, &mut player);
+    let mut started = false;
     while !rl.window_should_close() {
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(Color::BLACK);
+
+        if !started {
+            render_title_screen(&mut d);
+            if d.is_key_pressed(KeyboardKey::KEY_ENTER) {
+                started = true;
+            }
+            continue;
+        }
 
         if game_state.won {
             let text = "YOU ESCAPED!";
@@ -192,6 +201,7 @@ fn main() {
             .id()
             == 4
         {
+            // switch levels
             if levels.len() == 0 {
                 game_state.won = true;
                 continue;
@@ -200,6 +210,19 @@ fn main() {
             set_player_pos(&game_state, &mut player);
         }
     }
+}
+
+fn render_title_screen(d: &mut RaylibDrawHandle) {
+    let text = "PRESS <ENTER> TO START";
+    let font_size = 64;
+    let width = d.measure_text(&text, font_size);
+    d.draw_text(
+        text,
+        d.get_screen_width() / 2 - width / 2,
+        d.get_screen_height() / 2 - (32.0 * d.get_time().sin()) as i32,
+        font_size,
+        Color::WHITE,
+    );
 }
 
 fn detonate_all_bombs(game_state: &mut GameState) {

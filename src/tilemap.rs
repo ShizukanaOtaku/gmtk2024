@@ -97,11 +97,4 @@ impl Tilemap {
             tileset: &self.tileset,
         }
     }
-
-    pub fn iter_mut(&mut self) -> TilemapIterator {
-        TilemapIterator {
-            map_iter: self.tiles.iter(),
-            tileset: &self.tileset,
-        }
-    }
 }
