@@ -126,6 +126,28 @@ fn main() {
         })),
     ));
 
+    levels.push(Level::load_from_file(
+        &mut rl,
+        &thread,
+        "assets/level5.png",
+        tileset.clone(),
+        Some(Box::new(|level, x, y| match (x, y) {
+            (5, 2) => {
+                level.tilemap.set_tile(Vector2i::new(2, 3), 0);
+            }
+            (9, 3) => {
+                level.tilemap.set_tile(Vector2i::new(1, 5), 0);
+            }
+            (6, 6) => {
+                level.tilemap.set_tile(Vector2i::new(9, 5), 0);
+            }
+            (14, 3) => {
+                level.tilemap.set_tile(Vector2i::new(1, 8), 8);
+            }
+            _ => {}
+        })),
+    ));
+
     let mut game_state = GameState {
         current_level: levels.remove(0),
         bombs: 0,
