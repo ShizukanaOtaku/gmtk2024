@@ -120,8 +120,8 @@ impl Player {
         Rectangle {
             x: self.position.x + TILE_SIZE_PIXELS as f32 * 0.125,
             y: self.position.y,
-            width: (TILE_SIZE_PIXELS as f32 - 0.25) * self.scale,
-            height: TILE_SIZE_PIXELS as f32 * self.scale,
+            width: (TILE_SIZE_PIXELS as f32 - 0.25 * TILE_SIZE_PIXELS as f32) * self.scale,
+            height: TILE_SIZE_PIXELS as f32 * self.scale * 0.9,
         }
     }
 
@@ -153,7 +153,7 @@ impl Player {
         }
     }
 
-    pub fn tile_pos_center(&self) -> Vector2i {
+    pub fn tile_from_center(&self) -> Vector2i {
         Vector2i {
             x: nearest_lower_multiple(
                 (self.position.x + TILE_SIZE_PIXELS as f32 * self.scale / 2.0) as i32,

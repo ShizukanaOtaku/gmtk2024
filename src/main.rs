@@ -39,7 +39,7 @@ impl Vector2i {
 struct GameState {
     current_level: Level,
     bombs: i32,
-    can_detonate: bool,
+    placed_bombs: Vec<Vector2i>,
     won: bool,
 }
 
@@ -77,7 +77,9 @@ fn main() {
         &thread,
         "assets/level1.png",
         tileset.clone(),
-        Some(Box::new(|&mut _| println!("Level 1 lever flipped"))),
+        Some(Box::new(|level, _x, _y| {
+            level.tilemap.set_tile(Vector2i::new(13, 8), 0)
+        })),
     ));
 
     levels.push(Level::load_from_file(
@@ -93,16 +95,41 @@ fn main() {
         &thread,
         "assets/level3.png",
         tileset.clone(),
-        Some(Box::new(|level: &mut Level| {
+        Some(Box::new(|level, _x, _y| {
             level.tilemap.set_tile(Vector2i::new(6, 1), 0);
             level.tilemap.set_tile(Vector2i::new(6, 2), 0);
+        })),
+    ));
+
+    levels.push(Level::load_from_file(
+        &mut rl,
+        &thread,
+        "assets/level4.png",
+        tileset.clone(),
+        Some(Box::new(|level, x, y| match (x, y) {
+            (7, 8) => {
+                if level.tilemap.get_tile(&Vector2i::new(5, 5)).unwrap().id() == 1 {
+                    level.tilemap.set_tile(Vector2i::new(5, 5), 0);
+                    level.tilemap.set_tile(Vector2i::new(12, 1), 1);
+                } else {
+                    level.tilemap.set_tile(Vector2i::new(5, 5), 1);
+                    level.tilemap.set_tile(Vector2i::new(12, 1), 0);
+                }
+            }
+            (13, 8) => {
+                level.tilemap.set_tile(Vector2i::new(1, 5), 0);
+            }
+            (1, 1) => {
+                level.tilemap.set_tile(Vector2i::new(11, 1), 0);
+            }
+            _ => {}
         })),
     ));
 
     let mut game_state = GameState {
         current_level: levels.remove(0),
         bombs: 0,
-        can_detonate: false,
+        placed_bombs: Vec::new(),
         won: false,
     };
 
@@ -155,20 +182,40 @@ fn main() {
             if game_state
                 .current_level
                 .tilemap
-                .get_tile(&player.tile_pos_center())
+                .get_tile(&player.tile_from_center())
                 .unwrap()
                 .id()
                 == 6
-            {
-                game_state
+                || game_state
                     .current_level
                     .tilemap
-                    .set_tile(player.tile_pos_center(), 7);
-                game_state.current_level.on_lever_flip();
+                    .get_tile(&player.tile_from_center())
+                    .unwrap()
+                    .id()
+                    == 7
+            {
+                game_state.current_level.tilemap.set_tile(
+                    player.tile_from_center(),
+                    if game_state
+                        .current_level
+                        .tilemap
+                        .get_tile(&player.tile_from_center())
+                        .unwrap()
+                        .id()
+                        == 6
+                    {
+                        7
+                    } else {
+                        6
+                    },
+                );
+                game_state
+                    .current_level
+                    .on_lever_flip(player.tile_from_center().x, player.tile_from_center().y);
             } else if game_state
                 .current_level
                 .tilemap
-                .get_tile(&player.tile_pos_center())
+                .get_tile(&player.tile_from_center())
                 .unwrap()
                 .id()
                 == 8
@@ -176,13 +223,12 @@ fn main() {
                 game_state
                     .current_level
                     .tilemap
-                    .set_tile(player.tile_pos_center(), 0);
+                    .set_tile(player.tile_from_center(), 0);
                 game_state.bombs += 1;
-                game_state.can_detonate = true;
             } else if game_state
                 .current_level
                 .tilemap
-                .get_tile(&player.tile_pos_center())
+                .get_tile(&player.tile_from_center())
                 .unwrap()
                 .id()
                 == 0
@@ -191,14 +237,13 @@ fn main() {
                     game_state
                         .current_level
                         .tilemap
-                        .set_tile(player.tile_pos_center(), 8);
+                        .set_tile(player.tile_from_center(), 8);
                     game_state.bombs -= 1;
+                    game_state.placed_bombs.push(player.tile_from_center());
                 }
             }
         } else if d.is_key_pressed(KeyboardKey::KEY_ENTER) {
-            if game_state.can_detonate {
-                detonate_all_bombs(&mut game_state, &mut explosions);
-            }
+            detonate_all_bombs(&mut game_state, &mut explosions);
         }
 
         for explosion in explosions.iter_mut() {
@@ -208,7 +253,7 @@ fn main() {
         if game_state
             .current_level
             .tilemap
-            .get_tile(&player.tile_pos_center())
+            .get_tile(&player.tile_from_center())
             .unwrap()
             .id()
             == 4
@@ -240,10 +285,15 @@ fn render_title_screen(d: &mut RaylibDrawHandle) {
 fn detonate_all_bombs(game_state: &mut GameState, explosions: &mut Vec<Explosion>) {
     let mut bomb_positions: Vec<Vector2i> = Vec::new();
     for (pos, tile) in game_state.current_level.tilemap.iter() {
-        if tile.id() == 8 {
-            bomb_positions.push(pos.clone());
+        if tile.id() == 8
+        /* if its a bomb */
+        {
+            if game_state.placed_bombs.contains(&pos) {
+                bomb_positions.push(pos.clone());
+            }
         }
     }
+    game_state.placed_bombs.clear();
     for bomb_pos in bomb_positions {
         game_state
             .current_level
@@ -268,7 +318,6 @@ fn detonate_all_bombs(game_state: &mut GameState, explosions: &mut Vec<Explosion
             }
         }
     }
-    game_state.can_detonate = false;
 }
 
 fn set_player_pos(game_state: &GameState, player: &mut Player) {
