@@ -16,7 +16,7 @@ static TILEMAP_WIDTH: i32 = 16;
 static TILEMAP_HEIGHT: i32 = 10;
 static TILE_SIZE_PIXELS: i32 = 16 * SCALE;
 
-#[derive(Eq, PartialEq, Hash)]
+#[derive(Eq, PartialEq, Hash, Clone)]
 pub struct Vector2i {
     pub x: i32,
     pub y: i32,
@@ -37,6 +37,7 @@ impl Vector2i {
 struct GameState {
     current_level: Level,
     bombs: i32,
+    can_detonate: bool,
     won: bool,
 }
 
@@ -99,6 +100,7 @@ fn main() {
     let mut game_state = GameState {
         current_level: levels.remove(0),
         bombs: 0,
+        can_detonate: false,
         won: false,
     };
 
@@ -159,6 +161,7 @@ fn main() {
                     .tilemap
                     .set_tile(player.tile_pos_center(), 0);
                 game_state.bombs += 1;
+                game_state.can_detonate = true;
             } else if game_state
                 .current_level
                 .tilemap
@@ -174,6 +177,10 @@ fn main() {
                         .set_tile(player.tile_pos_center(), 8);
                     game_state.bombs -= 1;
                 }
+            }
+        } else if d.is_key_pressed(KeyboardKey::KEY_ENTER) {
+            if game_state.can_detonate {
+                detonate_all_bombs(&mut game_state);
             }
         }
 
@@ -193,6 +200,39 @@ fn main() {
             set_player_pos(&game_state, &mut player);
         }
     }
+}
+
+fn detonate_all_bombs(game_state: &mut GameState) {
+    let mut bomb_positions: Vec<Vector2i> = Vec::new();
+    for (pos, tile) in game_state.current_level.tilemap.iter() {
+        if tile.id() == 8 {
+            bomb_positions.push(pos.clone());
+        }
+    }
+    for bomb_pos in bomb_positions {
+        game_state
+            .current_level
+            .tilemap
+            .set_tile(bomb_pos.clone(), 0);
+        for x in (bomb_pos.x - 1)..=(bomb_pos.x + 1) {
+            for y in (bomb_pos.y - 1)..=(bomb_pos.y + 1) {
+                if game_state
+                    .current_level
+                    .tilemap
+                    .get_tile(&Vector2i::new(x, y))
+                    .unwrap()
+                    .id()
+                    == 5
+                {
+                    game_state
+                        .current_level
+                        .tilemap
+                        .set_tile(Vector2i::new(x, y), 0);
+                }
+            }
+        }
+    }
+    game_state.can_detonate = false;
 }
 
 fn set_player_pos(game_state: &GameState, player: &mut Player) {
