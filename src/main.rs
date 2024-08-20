@@ -1,10 +1,12 @@
 use std::{collections::HashMap, fmt::Display};
 
+use explosion::Explosion;
 use level::Level;
 use math::Vector2;
 use player::Player;
 use raylib::prelude::*;
 
+mod explosion;
 mod level;
 mod player;
 mod tile;
@@ -106,6 +108,12 @@ fn main() {
 
     set_player_pos(&game_state, &mut player);
     let mut started = false;
+    let mut explosions: Vec<Explosion> = Vec::new();
+    let explosion_textures = vec![
+        rl.load_texture(&thread, "assets/explosion1.png").unwrap(),
+        rl.load_texture(&thread, "assets/explosion2.png").unwrap(),
+        rl.load_texture(&thread, "assets/explosion3.png").unwrap(),
+    ];
     while !rl.window_should_close() {
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(Color::BLACK);
@@ -189,8 +197,12 @@ fn main() {
             }
         } else if d.is_key_pressed(KeyboardKey::KEY_ENTER) {
             if game_state.can_detonate {
-                detonate_all_bombs(&mut game_state);
+                detonate_all_bombs(&mut game_state, &mut explosions);
             }
+        }
+
+        for explosion in explosions.iter_mut() {
+            explosion.render(&mut d, &explosion_textures);
         }
 
         if game_state
@@ -225,7 +237,7 @@ fn render_title_screen(d: &mut RaylibDrawHandle) {
     );
 }
 
-fn detonate_all_bombs(game_state: &mut GameState) {
+fn detonate_all_bombs(game_state: &mut GameState, explosions: &mut Vec<Explosion>) {
     let mut bomb_positions: Vec<Vector2i> = Vec::new();
     for (pos, tile) in game_state.current_level.tilemap.iter() {
         if tile.id() == 8 {
@@ -237,6 +249,7 @@ fn detonate_all_bombs(game_state: &mut GameState) {
             .current_level
             .tilemap
             .set_tile(bomb_pos.clone(), 0);
+        explosions.push(Explosion::new(bomb_pos.clone()));
         for x in (bomb_pos.x - 1)..=(bomb_pos.x + 1) {
             for y in (bomb_pos.y - 1)..=(bomb_pos.y + 1) {
                 if game_state
