@@ -163,6 +163,8 @@ fn main() {
         rl.load_texture(&thread, "assets/explosion2.png").unwrap(),
         rl.load_texture(&thread, "assets/explosion3.png").unwrap(),
     ];
+    let audio = RaylibAudio::init_audio_device().unwrap();
+    let music = audio.new_sound("assets/music.wav").unwrap();
     while !rl.window_should_close() {
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(Color::BLACK);
@@ -173,6 +175,10 @@ fn main() {
                 started = true;
             }
             continue;
+        }
+
+        if !music.is_playing() {
+            music.play();
         }
 
         if game_state.won {
